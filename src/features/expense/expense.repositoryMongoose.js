@@ -52,13 +52,26 @@ export class ExpenseRepositoryMongoose{
         }
         async findByExpenseId(expenseid){
             try {
-                const currentExpenseValue = ExpenseModel.find({
+                const currentExpenseValue = await ExpenseModel.find({
                     _id: new ObjectId(expenseid)
                 });
                 console.log('Current values',currentExpenseValue)
                 return currentExpenseValue;
             } catch (error) {
                 console.log(error);
+            }
+        }
+        async filterByDate(startDate, endDate, userId){
+            try { //userId: 0, __v:0 , createdAt: 0 
+                const filteredData = await ExpenseModel.find().where("date").equals(userId).gte(startDate)
+                                                        .lte(endDate).select({ date: 1})
+                                                        .sort("date")
+                                                        .limit(10);
+                // console.log(filteredData);
+                return filteredData;
+                
+            } catch (error) {
+                console.log(error)
             }
         }
     

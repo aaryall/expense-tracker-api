@@ -9,8 +9,9 @@ export class ExpenseController{
     }
     async addExpense(req,res){
         try {
-            const {title, amount, date, category} = req.body;
+            let {title, amount, date, category} = req.body;
             const userId = req.userId;
+           
             console.log('Req userId',req.userId);
             //const newExpense = new ExpenseModel(title, amount, date, category,userId);
             const addedExpense = await this.expenseRepo.add(title, amount, date, category,userId);
@@ -48,9 +49,12 @@ export class ExpenseController{
                 
             }
             else{
-                for(let key in currentExpense){
+                for(let key in currentExpense[0].toObject()){
+                   
                     if(toUpdate.hasOwnProperty(key)){
+                      
                         if(toUpdate[key] != currentExpense[key]){
+                     
                             updateObj[key] = toUpdate[key];
                         }
                     }
@@ -66,6 +70,7 @@ export class ExpenseController{
                         return res.status(200).send('Expenses updated successfully');
                     }
                 }
+                res.status(501).send('something went wrong');
                 
                 
             }
@@ -74,5 +79,41 @@ export class ExpenseController{
         } catch (error) {
             console.log(error);
         }
+    }
+
+
+    async filterExpense(req, res){
+        const {type } = req.body;
+        let date;
+        const today = new Date();
+        const userid = req.userId;
+        console.log(type);
+        const firstDayCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        if(type == "Past Week"){
+            const pastOneWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate()-7);
+            const filteredData = await this.expenseRepo.filterByDate(pastOneWeek , today,userid);
+            console.log("filteredData ",filteredData);
+            return res.status(200).send(filteredData);
+       }
+       else if(type =="Last Month"){
+            const lastDatePrevMonth = new Date(firstDayCurrentMonth - 1);
+            const firstDatePrevMonth = new Date(lastDatePrevMonth.getFullYear(), lastDatePrevMonth.getMonth(), 1);
+            const filteredData = await this.expenseRepo.filterByDate(firstDatePrevMonth,lastDatePrevMonth,userid);
+            return res.status(200).send(filteredData);
+       }
+       else if(type == "Last 3 months"){
+            const lastDatePrevMonth = new Date(firstDayCurrentMonth - 1);
+            const last3months = new Date(firstDayCurrentMonth - 90);
+            const firstDatePast3months = new Date(last3months.getFullYear() , last3months.getMonth(),1 );
+            const filteredData = await  this.expenseRepo.filterByDate(firstDatePast3months,lastDatePrevMonth,userid);
+            return res.status(200).send(filteredData);
+
+       }
+       else if( type == "Custom"){
+        const {startDate, endDate} = req.body;
+        const filteredData = await  this.expenseRepo.filterByDate(startDate,endDate,userid);
+        return res.status(200).send(filteredData);
+
+       }
     }
 }
